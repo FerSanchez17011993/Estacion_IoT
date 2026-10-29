@@ -11,16 +11,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// Conexión a MongoDB Atlas
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://estacion_iot:ek2ZiLoeaHDZm9P0@estacion.0vujvgu.mongodb.net/estacion_iot?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
     .then(() => console.log("-> ¡Conectado exitosamente a MongoDB Atlas!"))
     .catch(err => console.error("-> Error de conexión a MongoDB:", err.message));
 
-// ==========================================
-// ESQUEMAS Y MODELOS
-// ==========================================
 const lecturaSchema = new mongoose.Schema({
     temperature: Number,
     humidity: Number,
@@ -39,8 +35,8 @@ const lecturaSchema = new mongoose.Schema({
 const Lectura = mongoose.model('Lectura', lecturaSchema);
 
 const historicoSchema = new mongoose.Schema({
-    fecha: String,         // YYYY-MM-DD
-    hora: String,          // HH:00
+    fecha: String, 
+    hora: String,  
     avgTemperature: Number,
     avgHumidity: Number,
     avgPressure: Number,
@@ -57,9 +53,6 @@ const historicoSchema = new mongoose.Schema({
 
 const Historico = mongoose.model('Historico', historicoSchema);
 
-// ==========================================
-// CRON JOB: CONSOLIDACIÓN HORARIA AUTOMÁTICA
-// ==========================================
 async function consolidarDiaActual() {
     try {
         const inicioDia = new Date();
@@ -116,21 +109,16 @@ async function consolidarDiaActual() {
             );
         }
 
-        // Limpiar registros en vivo de más de 48 horas para optimizar Atlas
         const dosDiasAtras = new Date(Date.now() - 48 * 60 * 60 * 1000);
         await Lectura.deleteMany({ timestamp: { $lt: dosDiasAtras } });
-        console.log("-> Consolidación horaria y limpieza ejecutadas con éxito.");
+        console.log("-> Consolidación horaria ejecutada con éxito.");
     } catch (err) {
         console.error("Error en consolidación:", err);
     }
 }
 
-// Ejecutar todos los días a las 23:58
 cron.schedule('58 23 * * *', () => { consolidarDiaActual(); });
 
-// ==========================================
-// ENDPOINTS DE LA API
-// ==========================================
 app.post('/api/readings', async (req, res) => {
     try {
         const nuevaLectura = new Lectura(req.body);
@@ -186,9 +174,6 @@ app.post('/api/admin/consolidar', async (req, res) => {
     res.json({ status: "success", message: "Consolidación forzada OK" });
 });
 
-// ==========================================
-// DASHBOARD PROFESIONAL (HTML / CSS / JS)
-// ==========================================
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="es">
@@ -406,7 +391,7 @@ app.get('/', (req, res) => {
         window.onload = () => {
             initMap();
             cargarDatosAltaDefinicion();
-            setInterval(cargarDatosAltaDefinicion, 15000); // Refresca los gráficos en vivo cada 15s
+            setInterval(cargarDatosAltaDefinicion, 15000); 
         };
     </script>
 </body>
